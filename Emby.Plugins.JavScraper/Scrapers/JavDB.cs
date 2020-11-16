@@ -28,7 +28,7 @@ namespace Emby.Plugins.JavScraper.Scrapers
         /// </summary>
         /// <param name="handler"></param>
         public JavDB(ILogger log = null)
-            : base("https://javdb.com/", log)
+            : base("https://javdb5.com/", log)
         {
         }
 
@@ -80,13 +80,17 @@ namespace Emby.Plugins.JavScraper.Scrapers
                 var img = node.SelectSingleNode("./div/img");
                 if (img != null)
                 {
-                    m.Cover = img.GetAttributeValue("src", null);
+                    m.Cover = img.GetAttributeValue("data-original", null);
+                    if (string.IsNullOrEmpty(m.Cover)) m.Cover = img.GetAttributeValue("data-src", null);
+                    if (string.IsNullOrEmpty(m.Cover)) m.Cover = img.GetAttributeValue("src", null);
                     if (m.Cover?.StartsWith("//") == true)
                         m.Cover = $"https:{m.Cover}";
                 }
 
                 m.Num = node.SelectSingleNode("./div[@class='uid']")?.InnerText.Trim();
+                if(string.IsNullOrEmpty(m.Num))  m.Num =node.SelectSingleNode("./div[@class='uid2']")?.InnerText.Trim();
                 m.Title = node.SelectSingleNode("./div[@class='video-title']")?.InnerText.Trim();
+                if(string.IsNullOrEmpty(m.Title))  m.Title =node.SelectSingleNode("./div[@class='video-title2']")?.InnerText.Trim();
                 m.Date = node.SelectSingleNode("./div[@class='meta']")?.InnerText.Trim();
 
                 if (string.IsNullOrWhiteSpace(m.Num) == false && m.Title?.StartsWith(m.Num, StringComparison.OrdinalIgnoreCase) == true)
@@ -136,7 +140,11 @@ namespace Emby.Plugins.JavScraper.Scrapers
 
             string GetCover()
             {
-                var img = doc.DocumentNode.SelectSingleNode("//img[@class='box video-cover']")?.GetAttributeValue("src", null);
+                var coverNode = doc.DocumentNode.SelectSingleNode("//img[@class='box video-cover']");
+                var img = coverNode?.GetAttributeValue("data-original", null);
+                if (string.IsNullOrEmpty(img)) img = coverNode?.GetAttributeValue("data-src", null);
+                if (string.IsNullOrEmpty(img)) img = coverNode?.GetAttributeValue("src", null);
+
                 if (string.IsNullOrWhiteSpace(img) == false)
                     return img;
                 img = doc.DocumentNode.SelectSingleNode("//meta[@property='og:image']")?.GetAttributeValue("content", null);
