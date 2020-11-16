@@ -77,7 +77,7 @@ namespace Emby.Plugins.JavScraper.Services
             };
             try
             {
-                var resp = await client.GetAsync("https://api.github.com/repos/JavScraper/Emby.Plugins.JavScraper/releases/latest");
+                var resp = await client.GetAsync("https://api.github.com/repos/maplejaw/Emby.Plugins.JavScraper/releases/latest");
 
                 if (resp.StatusCode == System.Net.HttpStatusCode.OK)
                 {
