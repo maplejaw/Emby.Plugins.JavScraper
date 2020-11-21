@@ -136,6 +136,9 @@ namespace Emby.Plugins.JavScraper.Scrapers
                 var img = node.SelectSingleNode(".//*[@id='vjs_sample_player']")?.GetAttributeValue("poster", null);
                 if (string.IsNullOrWhiteSpace(img) == false)
                     return img;
+                img = node.SelectSingleNode(".//*[@id='video-player']")?.GetAttributeValue("poster", null);
+                if (string.IsNullOrWhiteSpace(img) == false)
+                    return img;
                 img = doc.DocumentNode.SelectSingleNode("//img[@class='img-responsive']")?.GetAttributeValue("src", null);
                 if (string.IsNullOrWhiteSpace(img) == false)
                     return img;

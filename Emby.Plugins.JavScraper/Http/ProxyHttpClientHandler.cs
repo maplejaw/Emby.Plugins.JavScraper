@@ -63,7 +63,7 @@ namespace Emby.Plugins.JavScraper.Http
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            request.Headers.TryAddWithoutValidation("X-FORWARDED-FOR", "17.172.224.88");
+            // request.Headers.TryAddWithoutValidation("X-FORWARDED-FOR", "17.172.224.88");
             //mgstage.com 加入年龄认证Cookies
             if (request.RequestUri.ToString().Contains("mgstage.com") && !(request.Headers.TryGetValues("Cookie", out var cookies) && cookies.Contains("abc=1")))
                 request.Headers.Add("Cookie", "adc=1");

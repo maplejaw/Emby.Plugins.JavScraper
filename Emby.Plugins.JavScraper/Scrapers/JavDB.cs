@@ -28,7 +28,7 @@ namespace Emby.Plugins.JavScraper.Scrapers
         /// </summary>
         /// <param name="handler"></param>
         public JavDB(ILogger log = null)
-            : base("https://javdb5.com/", log)
+            : base("https://javdb6.com/", log)
         {
         }
 

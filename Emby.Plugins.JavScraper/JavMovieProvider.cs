@@ -139,13 +139,7 @@ namespace Emby.Plugins.JavScraper
                     return metadataResult;
                 }
             }
-
-            if (index == null)
-            {
-                _logger?.Info($"{nameof(GetMetadata)} name:{info.Name} not found 1.");
-                return metadataResult;
-            }
-
+            
             var sc = scrapers.FirstOrDefault(o => o.Name == index.Provider);
             if (sc == null)
                 return metadataResult;
@@ -371,12 +365,12 @@ namespace Emby.Plugins.JavScraper
             if (all.Any() != true)
                 return list;
 
-            all = scrapers
-                 .Join(all.GroupBy(o => o.Provider),
-                 o => o.Name,
-                 o => o.Key, (o, v) => v)
-                 .SelectMany(o => o)
-                 .ToList();
+            // all = scrapers
+            //      .Join(all.GroupBy(o => o.Provider),
+            //      o => o.Name,
+            //      o => o.Key, (o, v) => v)
+            //      .SelectMany(o => o)
+            //      .ToList();
 
             foreach (var m in all)
             {
