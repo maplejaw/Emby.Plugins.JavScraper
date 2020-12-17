@@ -1,5 +1,4 @@
-﻿using Emby.Plugins.JavScraper.Baidu;
-using Emby.Plugins.JavScraper.Configuration;
+﻿using Emby.Plugins.JavScraper.Configuration;
 using Emby.Plugins.JavScraper.Scrapers;
 using Emby.Plugins.JavScraper.Services;
 using MediaBrowser.Common.Configuration;
@@ -38,8 +37,7 @@ namespace Emby.Plugins.JavScraper
         private readonly IJsonSerializer _jsonSerializer;
         private readonly IApplicationPaths _appPaths;
 
-        private List<AbstractScraper> scrapers;
-        public ImageProxyService ImageProxyService { get; }
+        public ImageProxyService ImageProxyService => Plugin.Instance.ImageProxyService;
 
         public JavMovieProvider(
 #if __JELLYFIN__
@@ -54,55 +52,6 @@ namespace Emby.Plugins.JavScraper
             _httpClient = httpClient;
             _jsonSerializer = jsonSerializer;
             _appPaths = appPaths;
-            scrapers = GetScrapers(null, logManager);
-            ImageProxyService = new ImageProxyService(jsonSerializer, logManager.CreateLogger<ImageProxyService>(), fileSystem, appPaths);
-        }
-
-        public static List<AbstractScraper> GetScrapers(HttpClientHandler handler = null,
-#if __JELLYFIN__
-            ILoggerFactory logManager
-#else
-            ILogManager logManager
-#endif
-            = null)
-        {
-            var ls = new List<AbstractScraper>();
-            var base_type = typeof(AbstractScraper);
-            var types = Assembly.GetExecutingAssembly().GetTypes()
-                 .Where(o => base_type != o && base_type.IsAssignableFrom(o))
-                 .ToList();
-            var p1 = typeof(HttpClientHandler);
-            var p2 = typeof(ILogger);
-            foreach (var type in types)
-            {
-                foreach (var c in type.GetConstructors(BindingFlags.Public | BindingFlags.Instance).OrderByDescending(o => o.GetParameters()?.Count() ?? 0))
-                {
-                    var ps = c.GetParameters();
-                    var param = new List<object>();
-                    var notfound = false;
-                    foreach (var p in ps)
-                    {
-                        if (p.ParameterType == p1 || p1.IsAssignableFrom(p.ParameterType))
-                            param.Add(handler);
-                        else if (p.ParameterType == p2)
-                            param.Add(logManager?.CreateLogger(type));
-                        else
-                        {
-                            notfound = true;
-                            break;
-                        }
-                    }
-                    if (notfound)
-                        continue;
-                    try
-                    {
-                        var cc = Activator.CreateInstance(type, param.ToArray()) as AbstractScraper;
-                        ls.Add(cc);
-                    }
-                    catch { }
-                }
-            }
-            return ls;
         }
 
         public int Order => 4;
@@ -139,12 +88,21 @@ namespace Emby.Plugins.JavScraper
                     return metadataResult;
                 }
             }
-            
-            var sc = scrapers.FirstOrDefault(o => o.Name == index.Provider);
-            if (sc == null)
-                return metadataResult;
 
-            var m = await sc.Get(index);
+            JavVideo m = null;
+            if (info.IsAutomated)
+                m = Plugin.Instance.db.FindJavVideo(index.Provider, index.Url);
+
+            if (m == null)
+            {
+                var sc = Plugin.Instance.Scrapers.FirstOrDefault(o => o.Name == index.Provider);
+                if (sc == null)
+                    return metadataResult;
+
+                m = await sc.Get(index);
+                if (m != null)
+                    Plugin.Instance.db.SaveJavVideo(m);
+            }
 
             if (m == null)
             {
@@ -198,6 +156,18 @@ namespace Emby.Plugins.JavScraper
                 m.Genres = q.Where(o => !o.Contains("XXX")).ToList();
             }
 
+            //替换演员姓名
+            var actorReplaceMaps = Plugin.Instance.Configuration.EnableActorReplace ? Plugin.Instance.Configuration.GetActorReplaceMaps() : null;
+            if (actorReplaceMaps?.Any() == true && m.Actors?.Any() == true)
+            {
+                var q =
+                    from c in m.Actors
+                    join p in actorReplaceMaps on c equals p.source into ps
+                    from p in ps.DefaultIfEmpty()
+                    select p.target ?? c;
+                m.Actors = q.Where(o => !o.Contains("XXX")).ToList();
+            }
+
             //翻译
             if (Plugin.Instance.Configuration.EnableBaiduFanyi)
             {
@@ -205,69 +175,18 @@ namespace Emby.Plugins.JavScraper
                 var op = (BaiduFanyiOptionsEnum)Plugin.Instance.Configuration.BaiduFanyiOptions;
                 if (genreReplaceMaps?.Any() == true && op.HasFlag(BaiduFanyiOptionsEnum.Genre))
                     op &= ~BaiduFanyiOptionsEnum.Genre;
-                BaiduFanyiOptionsEnum op2 = 0;
+                var lang = Plugin.Instance.Configuration.BaiduFanyiLanguage?.Trim();
+                if (string.IsNullOrWhiteSpace(lang))
+                    lang = "zh";
 
-                void Add(BaiduFanyiOptionsEnum t, string str)
-                {
-                    if (!op.HasFlag(t) || string.IsNullOrWhiteSpace(str))
-                        return;
-                    arr.Add(str);
-                    op2 |= t;
-                }
+                if (op.HasFlag(BaiduFanyiOptionsEnum.Name))
+                    m.Title = await Plugin.Instance.TranslationService.Fanyi(m.Title);
 
-                Add(BaiduFanyiOptionsEnum.Name, m.Title);
-                if (m.Genres?.Any() == true)
-                    Add(BaiduFanyiOptionsEnum.Genre, string.Join("\n", m.Genres));
-                Add(BaiduFanyiOptionsEnum.Plot, m.Plot);
+                if (op.HasFlag(BaiduFanyiOptionsEnum.Plot))
+                    m.Plot = await Plugin.Instance.TranslationService.Fanyi(m.Plot);
 
-                if (arr.Any())
-                {
-                    try
-                    {
-                        var sp = "@$@";
-                        var q = string.Join($"\n{sp}\n", arr);
-                        var fanyi_result = await BaiduFanyiService.Fanyi(q, _jsonSerializer);
-                        if (fanyi_result?.trans_result?.Any() == true)
-                        {
-                            var values = new List<List<string>>();
-                            var cur_value = new List<string>();
-                            values.Add(cur_value);
-                            foreach (var c in fanyi_result.trans_result)
-                            {
-                                if (c.src != sp)
-                                    cur_value.Add(c.dst);
-                                else
-                                {
-                                    cur_value = new List<string>();
-                                    values.Add(cur_value);
-                                }
-                            }
-
-                            int i = 0;
-                            if (op2.HasFlag(BaiduFanyiOptionsEnum.Name))
-                            {
-                                if (i < values.Count && values[i].Any())
-                                    m.Title = string.Join("\n", values[i]);
-                                i++;
-                            }
-
-                            if (op2.HasFlag(BaiduFanyiOptionsEnum.Genre))
-                            {
-                                if (i < values.Count && values[i].Any())
-                                    m.Genres = values[i].Select(o => o.Trim().TrimEnd("，。".ToArray()).Trim()).ToList();
-                                i++;
-                            }
-
-                            if (op2.HasFlag(BaiduFanyiOptionsEnum.Plot))
-                            {
-                                if (i < values.Count && values[i].Any())
-                                    m.Plot = string.Join("\n", values[i]);
-                                i++;
-                            }
-                        }
-                    }
-                    catch { }
-                }
+                if (op.HasFlag(BaiduFanyiOptionsEnum.Genre))
+                    m.Genres = await Plugin.Instance.TranslationService.Fanyi(m.Genres);
             }
 
             if (Plugin.Instance?.Configuration?.AddChineseSubtitleGenre == true &&
@@ -328,8 +247,6 @@ namespace Emby.Plugins.JavScraper
                     metadataResult.AddPerson(pi);
                 }
 
-            m.SaveToCache(_appPaths.CachePath, _jsonSerializer);
-
             return metadataResult;
         }
 
@@ -352,7 +269,7 @@ namespace Emby.Plugins.JavScraper
             if (javid == null && (searchInfo.Name.Length > 12 || !regexNum.IsMatch(searchInfo.Name)))
                 return list;
             var key = javid?.id ?? searchInfo.Name;
-            var scrapers = this.scrapers;
+            var scrapers = Plugin.Instance.Scrapers.ToList();
             var enableScrapers = Plugin.Instance?.Configuration?.GetEnableScrapers()?.Select(o => o.Name).ToList();
             if (enableScrapers?.Any() == true)
                 scrapers = scrapers.Where(o => enableScrapers.Contains(o.Name)).ToList();
@@ -365,12 +282,12 @@ namespace Emby.Plugins.JavScraper
             if (all.Any() != true)
                 return list;
 
-            // all = scrapers
-            //      .Join(all.GroupBy(o => o.Provider),
-            //      o => o.Name,
-            //      o => o.Key, (o, v) => v)
-            //      .SelectMany(o => o)
-            //      .ToList();
+            all = scrapers
+                 .Join(all.GroupBy(o => o.Provider),
+                 o => o.Name,
+                 o => o.Key, (o, v) => v)
+                 .SelectMany(o => o)
+                 .ToList();
 
             foreach (var m in all)
             {

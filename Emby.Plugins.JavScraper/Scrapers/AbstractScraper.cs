@@ -23,16 +23,51 @@ namespace Emby.Plugins.JavScraper.Scrapers
     {
         protected HttpClientEx client;
         protected ILogger log;
+        private static NamedLockerAsync locker = new NamedLockerAsync();
 
         /// <summary>
         /// 适配器名称
         /// </summary>
         public abstract string Name { get; }
 
+        /// <summary>
+        /// 默认的基础URL
+        /// </summary>
+        public string DefaultBaseUrl { get; }
+
+        /// <summary>
+        /// 基础URL
+        /// </summary>
+        private string base_url = null;
+
+        /// <summary>
+        /// 基础URL
+        /// </summary>
+        public string BaseUrl
+        {
+            get => base_url;
+            set
+            {
+                if (value.IsWebUrl() != true)
+                    return;
+                if (base_url == value && client != null)
+                    return;
+                base_url = value;
+                client = new HttpClientEx(client => client.BaseAddress = new Uri(base_url));
+                log?.Info($"BaseUrl: {base_url}");
+            }
+        }
+
+        /// <summary>
+        /// 构造函数
+        /// </summary>
+        /// <param name="base_url">基础URL</param>
+        /// <param name="log">日志记录器</param>
         public AbstractScraper(string base_url, ILogger log)
         {
-            client = new HttpClientEx(client => client.BaseAddress = new Uri(base_url));
             this.log = log;
+            DefaultBaseUrl = base_url;
+            BaseUrl = base_url;
         }
 
         //ABC-00012 --> ABC-012
@@ -235,18 +270,41 @@ namespace Emby.Plugins.JavScraper.Scrapers
 
         public virtual async Task<string> GetDmmPlot(string num)
         {
+            const string dmm = "dmm";
             if (string.IsNullOrWhiteSpace(num))
                 return null;
 
             num = num.Replace("-", "").Replace("_", "");
+            using (await locker.LockAsync(num))
+            {
+                var item = Plugin.Instance.db.Plots.Find(o => o.num == num && o.provider == dmm).FirstOrDefault();
+                if (item != null)
+                    return item.plot;
 
-            var url = $"https://www.dmm.co.jp/mono/dvd/-/detail/=/cid={num}/";
-            var doc = await GetHtmlDocumentAsync(url);
+                var url = $"https://www.dmm.co.jp/mono/dvd/-/detail/=/cid={num}/";
+                var doc = await GetHtmlDocumentAsync(url);
 
-            if (doc == null)
-                return null;
+                if (doc == null)
+                    return null;
 
-            return doc.DocumentNode.SelectSingleNode("//tr/td/div[@class='mg-b20 lh4']/p[@class='mg-b20']")?.InnerText?.Trim();
+                var plot = doc.DocumentNode.SelectSingleNode("//tr/td/div[@class='mg-b20 lh4']/p[@class='mg-b20']")?.InnerText?.Trim();
+                if (string.IsNullOrWhiteSpace(plot) == false)
+                {
+                    var dt = DateTime.Now;
+                    item = new Data.Plot()
+                    {
+                        created = dt,
+                        modified = dt,
+                        num = num,
+                        plot = plot,
+                        provider = dmm,
+                        url = url
+                    };
+                    Plugin.Instance.db.Plots.Insert(item);
+                }
+
+                return plot;
+            }
         }
     }
 }

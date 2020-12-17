@@ -160,11 +160,6 @@ namespace Emby.Plugins.JavScraper.Configuration
         private List<JavScraperConfigItem> _scrapers;
 
         /// <summary>
-        /// 全部的刮削器的名字
-        /// </summary>
-        private static readonly List<string> all_scraper_names = JavMovieProvider.GetScrapers().Select(o => o.Name).ToList();
-
-        /// <summary>
         /// 刮削器
         /// </summary>
         [XmlArrayItem(ElementName = "Scraper")]
@@ -172,20 +167,27 @@ namespace Emby.Plugins.JavScraper.Configuration
         {
             get
             {
+                var scrapers = Plugin.Instance.Scrapers;
                 if (_scrapers?.Any() != true)
-                    _scrapers = all_scraper_names.Select(o => new JavScraperConfigItem() { Name = o, Enable = true }).ToList();
+                    _scrapers = scrapers.Select(o => new JavScraperConfigItem() { Name = o.Name, Enable = true, Url = o.DefaultBaseUrl }).ToList();
                 else
                 {
                     //移除重复的
                     _scrapers = _scrapers.GroupBy(o => o.Name).Select(o => o.First()).ToList();
 
-                    var names = all_scraper_names.ToList();
+                    var names = scrapers.Select(o => o.Name).ToList();
                     //移除不存在的
                     _scrapers.RemoveAll(o => !names.Contains(o.Name));
 
+                    //如果url不正确则用默认的
+                    _scrapers.Where(o => !o.Url.IsWebUrl())
+                        .Join(scrapers, o => o.Name, o => o.Name, (o, v) => o.Url = v.DefaultBaseUrl)
+                        .ToArray();
+
+                    var exists = _scrapers.Select(o => o.Name).ToList();
                     //新增的
-                    var news = all_scraper_names.Except(_scrapers.Select(o => o.Name))
-                        .Select(o => new JavScraperConfigItem() { Name = o, Enable = true })
+                    var news = scrapers.Where(o => !exists.Contains(o.Name))
+                        .Select(o => new JavScraperConfigItem() { Name = o.Name, Enable = true, Url = o.DefaultBaseUrl })
                         .ToList();
 
                     if (news.Any())
@@ -194,7 +196,26 @@ namespace Emby.Plugins.JavScraper.Configuration
 
                 return _scrapers?.ToArray();
             }
-            set => _scrapers = value?.Where(o => o != null).GroupBy(o => o.Name).Select(o => o.First()).ToList();
+            set
+            {
+                _scrapers = value?.Where(o => o != null).GroupBy(o => o.Name).Select(o => o.First()).ToList();
+                var scrapers = Plugin.Instance.Scrapers;
+                if (_scrapers?.Any() != true)
+                    _scrapers = scrapers.Select(o => new JavScraperConfigItem() { Name = o.Name, Enable = true, Url = o.DefaultBaseUrl }).ToList();
+                else
+                {
+                    _scrapers.Join(scrapers, o => o.Name, o => o.Name, (o, v) =>
+                    {
+                        if (o.Url.IsWebUrl()) 
+                            v.BaseUrl = o.Url;
+                        else
+                            o.Url = v.DefaultBaseUrl;
+                        return true;
+                    }).ToArray();
+                }
+
+            }
+            
         }
 
         /// <summary>
@@ -305,7 +326,8 @@ namespace Emby.Plugins.JavScraper.Configuration
         /// </summary>
         public string GenreReplaceMap
         {
-            get => string.IsNullOrWhiteSpace(_GenreReplaceMap) ? DefaultGenreReplaceMap() : _GenreReplaceMap; set
+            get => string.IsNullOrWhiteSpace(_GenreReplaceMap) ? DefaultGenreReplaceMap() : _GenreReplaceMap;
+            set
             {
                 _GenreReplaceMap = value;
                 if (string.IsNullOrWhiteSpace(value))
@@ -766,6 +788,65 @@ Vシネマ:电影放映
 
         #endregion 类别替换
 
+        #region 演员姓名替换
+
+        /// <summary>
+        /// 启用演员姓名替换
+        /// </summary>
+        public bool EnableActorReplace { get; set; } = false;
+
+        private List<(string source, string target)> ActorReplaceMaps;
+
+        private string _ActorReplaceMap;
+
+        /// <summary>
+        /// 演员姓名替换映射关系
+        /// </summary>
+        public string ActorReplaceMap
+        {
+            get => string.IsNullOrWhiteSpace(_ActorReplaceMap) ? DefaultActorReplaceMap() : _ActorReplaceMap;
+            set
+            {
+                _ActorReplaceMap = value;
+                if (string.IsNullOrWhiteSpace(value))
+                    _ActorReplaceMap = DefaultActorReplaceMap();
+                ActorReplaceMaps = null;
+            }
+        }
+
+        /// <summary>
+        /// 获取替换表
+        /// </summary>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public List<(string source, string target)> GetActorReplaceMaps()
+        {
+            if (ActorReplaceMaps == null)
+            {
+                if (string.IsNullOrWhiteSpace(_ActorReplaceMap))
+                    ActorReplaceMaps = new List<(string source, string target)>();
+                else
+                {
+                    ActorReplaceMaps = _ActorReplaceMap.Split("\r\n".ToArray(), StringSplitOptions.RemoveEmptyEntries)
+                        .Distinct()
+                        .Select(o => o.Split(":：".ToArray(), StringSplitOptions.RemoveEmptyEntries))
+                        .Where(o => o.Length >= 2)
+                        .Select(o => new { key = o[0].Trim(), value = o[1].Trim() })
+                        .Where(o => string.IsNullOrWhiteSpace(o.key) == false && string.IsNullOrWhiteSpace(o.value) == false)
+                        .GroupBy(o => o.key)
+                        .Select(o => (o.Key, o.First().value))
+                        .ToList();
+                }
+            }
+
+            return ActorReplaceMaps;
+        }
+
+        private static string DefaultActorReplaceMap()
+            => @"";
+
+        #endregion 演员姓名替换
+
         /// <summary>
         /// 文件整理配置
         /// </summary>
@@ -829,7 +910,13 @@ Vシネマ:电影放映
         [XmlAttribute]
         public string Name { get; set; }
 
+        /// <summary>
+        /// 地址
+        /// </summary>
+        [XmlAttribute]
+        public string Url { get; set; }
+
         public override string ToString()
-            => $"{Name} {Enable}";
+            => $"{Name} {Enable} {Url}";
     }
 }

@@ -1,4 +1,4 @@
-﻿﻿
+﻿
 <!DOCTYPE html>
 <html>
 <head>
@@ -38,7 +38,7 @@
                             <div class="fieldDescription">
                                 <span id="latest_message" name="latest_message"></span>
                             </div>
-                        </p>
+                        
                         <p class="description1" id="update2" name="update2" style="display: none;">
                             新版本已经下载，需要重启 Emby/Jellyfin Server 后生效。
                         </p>
@@ -47,8 +47,9 @@
                         </p>
                     </div>
 
-                    <div is="emby-collapse" title="代理服务器">
-                        <div class="collapseContent">
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+	<legend><h3>代理服务器</h3></legend>
+
                             <div class="selectContainer">
                                 <label class="selectLabel" for="selectProxyType">代理服务器类型：</label>
                                 <select is="emby-select" id="selectProxyType" name="selectProxyType" label="代理服务器类型：" class="selectProxyType emby-select-withcolor emby-select">
@@ -58,7 +59,10 @@
                                     <option value="2">HTTPS</option>
                                     <option value="3">Socks5</option>
                                 </select>
-                                <div class="selectArrowContainer"><div style="visibility:hidden;">0</div><i class="selectArrow md-icon"></i></div>
+                                <div class="selectArrowContainer">
+<div style="visibility:hidden;display:none;">0</div>
+<span class="selectArrow material-icons keyboard_arrow_down"></span>
+</div>
                             </div>
                             <div id="selectProxyTypeJsProxy" name="selectProxyTypeJsProxy" class="selectProxyTypeJsProxy">
                                 <div class="inputContainer">
@@ -99,11 +103,11 @@
                                     用户名和密码，可以为空。
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </fieldset>
 
-                    <div is="emby-collapse" title="刮削器配置">
-                        <div class="collapseContent">
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+	<legend><h3>刮削器配置</h3></legend>
+
                             <div class="checkboxList paperList checkboxList-paperList" id="Scrapers" name="Scrapers">
                                 <div class="listItem listItem-border sortableOption sortItem" data-sort="0">
                                     <label class="listItemCheckboxContainer emby-checkbox-label">
@@ -111,8 +115,8 @@
                                         <span class="checkboxLabel">AAAA</span>
                                     </label>
                                     <div class="listItemBody two-line listItemBodyText"></div>
-                                    <button type="button" is="paper-icon-button-light" class="btnViewItemUp btnViewItemMove autoSize paper-icon-button-light" title="上"><i class="md-icon"></i></button>
-                                    <button type="button" is="paper-icon-button-light" class="btnViewItemDown btnViewItemMove autoSize paper-icon-button-light" title="下"><i class="md-icon"></i></button>
+                                    <button type="button" is="paper-icon-button-light" title="上" class="btnSortable paper-icon-button-light btnSortableMoveUp btnViewItemUp" data-pluginindex="2"><span class="material-icons keyboard_arrow_up"></span></button>
+                                    <button type="button" is="paper-icon-button-light" title="下" class="btnSortable paper-icon-button-light btnSortableMoveDown btnViewItemDown" data-pluginindex="0"><span class="material-icons keyboard_arrow_down"></span></button>
                                 </div>
                                 <div class="listItem listItem-border sortableOption sortItem" data-sort="1">
                                     <label class="listItemCheckboxContainer emby-checkbox-label">
@@ -120,8 +124,8 @@
                                         <span class="checkboxLabel">BBBB</span>
                                     </label>
                                     <div class="listItemBody two-line listItemBodyText"></div>
-                                    <button type="button" is="paper-icon-button-light" class="btnViewItemUp btnViewItemMove autoSize paper-icon-button-light" title="上"><i class="md-icon"></i></button>
-                                    <button type="button" is="paper-icon-button-light" class="btnViewItemDown btnViewItemMove autoSize paper-icon-button-light" title="下"><i class="md-icon"></i></button>
+                                    <button type="button" is="paper-icon-button-light" title="上" class="btnSortable paper-icon-button-light btnSortableMoveUp btnViewItemUp" data-pluginindex="2"><span class="material-icons keyboard_arrow_up"></span></button>
+                                    <button type="button" is="paper-icon-button-light" title="下" class="btnSortable paper-icon-button-light btnSortableMoveDown btnViewItemDown" data-pluginindex="0"><span class="material-icons keyboard_arrow_down"></span></button>
                                 </div>
                                 <div class="listItem listItem-border sortableOption sortItem" data-sort="2">
                                     <label class="listItemCheckboxContainer emby-checkbox-label">
@@ -129,15 +133,15 @@
                                         <span class="checkboxLabel">CCCC</span>
                                     </label>
                                     <div class="listItemBody two-line listItemBodyText"></div>
-                                    <button type="button" is="paper-icon-button-light" class="btnViewItemUp btnViewItemMove autoSize paper-icon-button-light" title="上"><i class="md-icon"></i></button>
-                                    <button type="button" is="paper-icon-button-light" class="btnViewItemDown btnViewItemMove autoSize paper-icon-button-light" title="下"><i class="md-icon"></i></button>
+                                    <button type="button" is="paper-icon-button-light" title="上" class="btnSortable paper-icon-button-light btnSortableMoveUp btnViewItemUp" data-pluginindex="2"><span class="material-icons keyboard_arrow_up"></span></button>
+                                    <button type="button" is="paper-icon-button-light" title="下" class="btnSortable paper-icon-button-light btnSortableMoveDown btnViewItemDown" data-pluginindex="0"><span class="material-icons keyboard_arrow_down"></span></button>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </fieldset>
 
-                    <div is="emby-collapse" title="采集配置">
-                        <div class="collapseContent">
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+	<legend><h3>采集配置</h3></legend>
+
 
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabel-float inputLabelUnfocused" for="txtIgnoreGenre">移除以下标签:</label>
@@ -147,7 +151,7 @@
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label>
-                                    <input type="checkbox" is="emby-checkbox" id="chkGenreIgnoreActor" />
+                                    <input type="checkbox" is="emby-checkbox" id="chkGenreIgnoreActor">
                                     <span>移除标签中的女优名字</span>
                                 </label>
                                 <div class="fieldDescription checkboxFieldDescription"></div>
@@ -155,7 +159,7 @@
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label>
-                                    <input type="checkbox" is="emby-checkbox" id="chkTitleIgnoreActor" />
+                                    <input type="checkbox" is="emby-checkbox" id="chkTitleIgnoreActor">
                                     <span>从标题结尾处移除女优的名字</span>
                                 </label>
                                 <div class="fieldDescription checkboxFieldDescription"></div>
@@ -163,16 +167,16 @@
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label>
-                                    <input type="checkbox" is="emby-checkbox" id="chkAddChineseSubtitleGenre" />
+                                    <input type="checkbox" is="emby-checkbox" id="chkAddChineseSubtitleGenre">
                                     <span>给 -C 或 -C2 结尾的影片增加“中文字幕”标签</span>
                                 </label>
                                 <div class="fieldDescription checkboxFieldDescription"></div>
                             </div>
-                        </div>
-                    </div>
+                        </fieldset>
 
-                    <div is="emby-collapse" title="标题格式">
-                        <div class="collapseContent">
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+	<legend><h3>标题格式</h3></legend>
+
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabel-float inputLabelUnfocused" for="txtTitleFormat">标题格式:</label>
                                 <input is="emby-input" type="text" id="txtTitleFormat" name="txtTitleFormat" class="emby-input">
@@ -201,14 +205,14 @@
                                     <li>%genre:A?B:C% : 类别。当存在类别A时值为B，否则值为C；B和C可以为空。示例 %genre:中文字幕?中文:%</li>
                                 </ul>
                             </div>
-                        </div>
-                    </div>
+                        </fieldset>
 
-                    <div is="emby-collapse" title="封面剪裁">
-                        <div class="collapseContent">
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+	<legend><h3>封面剪裁</h3></legend>
+
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label>
-                                    <input type="checkbox" is="emby-checkbox" id="chkEnableBaiduBodyAnalysis" />
+                                    <input type="checkbox" is="emby-checkbox" id="chkEnableBaiduBodyAnalysis">
                                     <span>使用百度人体分析接口进行精确剪裁</span>
                                 </label>
                                 <div class="fieldDescription checkboxFieldDescription"></div>
@@ -224,32 +228,32 @@
                                 <div class="fieldDescription"></div>
                             </div>
                             <div class="fieldDescription">强烈推荐配置此功能！这些功能需要自行申请百度人体分析接口，并填写 API Key 和 Secret Key。<a is="emby-linkbutton" class="button-link lnkSupporterLearnMore emby-button" href="https://ai.baidu.com/tech/body" target="_blank">了解更多</a></div>
-                        </div>
-                    </div>
+                        </fieldset>
 
-                    <div is="emby-collapse" title="女优头像">
-                        <div class="collapseContent">
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+	<legend><h3>女优头像</h3></legend>
+
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label>
-                                    <input type="checkbox" is="emby-checkbox" id="chkEnableCutPersonImage" />
+                                    <input type="checkbox" is="emby-checkbox" id="chkEnableCutPersonImage">
                                     <span>按比例剪裁女优头像</span>
                                 </label>
                                 <div class="fieldDescription checkboxFieldDescription"></div>
                             </div>
                             <div class="fieldDescription">按比例剪裁能让头像在 Emby 中显示不变形，但会有部分内容被裁掉。女优头像数据源来自 <a is="emby-linkbutton" class="button-link lnkSupporterLearnMore emby-button" href="https://github.com/xinxin8816/gfriends" target="_blank">女友头像仓库</a>。</div>
 
-                            <br />
+                            <br>
                             <div class="description1">
                                 <b>立即采集缺失的女优头像</b>：请到 <a data-navmenuid='/scheduledtasks' is='emby-linkbutton' class='button-link emby-button' href='/scheduledtasks' title=' 高级 - 计划任务 - JavScraper '> 高级 - 计划任务 - JavScraper </a> 中找到 <b>JavScraper: 立即采集缺失的女优头像</b>，点击右边的 <i class="md-icon">play_arrow</i> 开始执行。
                             </div>
-                        </div>
-                    </div>
+                        </fieldset>
 
-                    <div is="emby-collapse" title="翻译">
-                        <div class="collapseContent">
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+	<legend><h3>翻译</h3></legend>
+
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label>
-                                    <input type="checkbox" is="emby-checkbox" id="chkEnableBaiduFanyi" />
+                                    <input type="checkbox" is="emby-checkbox" id="chkEnableBaiduFanyi">
                                     <span>开启百度翻译</span>
                                 </label>
                                 <div class="fieldDescription checkboxFieldDescription"></div>
@@ -261,27 +265,30 @@
                                     <option value="cht">繁体中文</option>
                                     <option value="en">英文</option>
                                 </select>
-                                <div class="selectArrowContainer"><div style="visibility:hidden;">0</div><i class="selectArrow md-icon"></i></div>
+                                <div class="selectArrowContainer">
+<div style="visibility:hidden;display:none;">0</div>
+<span class="selectArrow material-icons keyboard_arrow_down"></span>
+</div>
                             </div>
                             <div class="selectContainer">
                                 <label class="selectLabel">翻译内容：</label>
                                 <div class="checkboxContainer checkboxContainer-withDescription">
                                     <label>
-                                        <input type="checkbox" is="emby-checkbox" id="chkEnableBaiduFanyiOptionsName" />
+                                        <input type="checkbox" is="emby-checkbox" id="chkEnableBaiduFanyiOptionsName">
                                         <span>标题</span>
                                     </label>
                                     <div class="fieldDescription checkboxFieldDescription"></div>
                                 </div>
                                 <div class="checkboxContainer checkboxContainer-withDescription">
                                     <label>
-                                        <input type="checkbox" is="emby-checkbox" id="chkEnableBaiduFanyiOptionsGenre" />
+                                        <input type="checkbox" is="emby-checkbox" id="chkEnableBaiduFanyiOptionsGenre">
                                         <span>类别 （不推荐）</span>
                                     </label>
                                     <div class="fieldDescription checkboxFieldDescription"></div>
                                 </div>
                                 <div class="checkboxContainer checkboxContainer-withDescription">
                                     <label>
-                                        <input type="checkbox" is="emby-checkbox" id="chkEnableBaiduFanyiOptionsPlot" />
+                                        <input type="checkbox" is="emby-checkbox" id="chkEnableBaiduFanyiOptionsPlot">
                                         <span>简介</span>
                                     </label>
                                     <div class="fieldDescription checkboxFieldDescription"></div>
@@ -298,15 +305,15 @@
                                 <div class="fieldDescription"></div>
                             </div>
                             <div class="fieldDescription">这功能需要自行申请百度翻译接口，并填写 API Key 和 Secret Key。<a is="emby-linkbutton" class="button-link lnkSupporterLearnMore emby-button" href="https://fanyi-api.baidu.com/" target="_blank">了解更多</a></div>
-                        </div>
-                    </div>
+                        </fieldset>
 
-                    <div is="emby-collapse" title="影片类别">
-                        <div class="collapseContent">
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+	<legend><h3>影片类别</h3></legend>
+
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label>
-                                    <input type="checkbox" is="emby-checkbox" id="chkEnableGenreReplace" />
+                                    <input type="checkbox" is="emby-checkbox" id="chkEnableGenreReplace">
                                     <span>开启类别替换</span>
                                 </label>
                                 <div class="fieldDescription checkboxFieldDescription"></div>
@@ -317,15 +324,15 @@
                                 <div class="fieldDescription"></div>
                             </div>
                             <div class="fieldDescription">该功能优先级高于百度翻译中的类别翻译项。每行一条记录，两个类别之间用小写的冒号隔开，当目标类别为XXXX时，表示去除该类别。</div>
-                        </div>
-                    </div>
+                        </fieldset>
 
-                    <div is="emby-collapse" title="演员姓名">
-                        <div class="collapseContent">
+                    <fieldset class="verticalSection verticalSection-extrabottompadding">
+	<legend><h3>演员姓名</h3></legend>
+
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label>
-                                    <input type="checkbox" is="emby-checkbox" id="chkEnableActorReplace" />
+                                    <input type="checkbox" is="emby-checkbox" id="chkEnableActorReplace">
                                     <span>开启演员姓名替换</span>
                                 </label>
                                 <div class="fieldDescription checkboxFieldDescription"></div>
@@ -336,9 +343,8 @@
                                 <div class="fieldDescription"></div>
                             </div>
                             <div class="fieldDescription">每行一条记录，两个演员姓名之间用小写的冒号隔开，当目标演员姓名为XXXX时，表示去除该演员姓名。</div>
-                        </div>
-                    </div>
-                    <br />
+                        </fieldset>
+                    <br>
 
                     <div>
                         <button is="emby-button" type="submit" class="raised button-submit block emby-button"><span>保存</span></button>
@@ -470,8 +476,8 @@
                         html += '        <input is="emby-input" type="url" name="Url" class="emby-input" label="服务器：" value="' + e.Url + '">';
                         html += '    </label>';
                         html += '    <div class="listItemBody two-line listItemBodyText"></div>';
-                        html += '    <button type="button" is="paper-icon-button-light" class="btnViewItemUp btnViewItemMove autoSize paper-icon-button-light" title="上"><i class="md-icon"></i></button>';
-                        html += '    <button type="button" is="paper-icon-button-light" class="btnViewItemDown btnViewItemMove autoSize paper-icon-button-light" title="下"><i class="md-icon"></i></button>';
+                        html += '    <button type="button" is="paper-icon-button-light" title="上" class="btnSortable paper-icon-button-light btnSortableMoveUp btnViewItemUp" data-pluginindex="2"><span class="material-icons keyboard_arrow_up"></span></button>';
+                        html += '    <button type="button" is="paper-icon-button-light" title="下" class="btnSortable paper-icon-button-light btnSortableMoveDown btnViewItemDown" data-pluginindex="0"><span class="material-icons keyboard_arrow_down"></span></button>';
                         html += '</div>';
                         html += '\r\n';
                     });

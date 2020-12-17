@@ -1,5 +1,4 @@
-﻿using Emby.Plugins.JavScraper.Http;
-using HtmlAgilityPack;
+﻿using HtmlAgilityPack;
 #if __JELLYFIN__
 using Microsoft.Extensions.Logging;
 #else
@@ -8,7 +7,7 @@ using MediaBrowser.Model.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Emby.Plugins.JavScraper.Scrapers
@@ -24,11 +23,16 @@ namespace Emby.Plugins.JavScraper.Scrapers
         public override string Name => "JavDB";
 
         /// <summary>
+        /// 番号分段识别
+        /// </summary>
+        private static Regex regex = new Regex("((?<a>[a-z]{2,})|(?<b>[0-9]{2,}))", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        /// <summary>
         /// 构造
         /// </summary>
         /// <param name="handler"></param>
         public JavDB(ILogger log = null)
-            : base("https://javdb6.com/", log)
+            : base("https://javdb.com/", log)
         {
         }
 
@@ -51,6 +55,29 @@ namespace Emby.Plugins.JavScraper.Scrapers
             var doc = await GetHtmlDocumentAsync($"/search?q={key}&f=all");
             if (doc != null)
                 ParseIndex(ls, doc);
+
+            if (ls.Any())
+            {
+                var ks = regex.Matches(key).Cast<Match>()
+                     .Select(o => o.Groups[0].Value).ToList();
+
+                ls.RemoveAll(i =>
+                {
+                    foreach (var k in ks)
+                    {
+                        if (i.Num?.IndexOf(k, StringComparison.OrdinalIgnoreCase) >= 0) //包含，则继续
+                            continue;
+                        if (k[0] != '0') //第一个不是0，则不用继续了。
+                            return true;//移除
+
+                        var k2 = k.TrimStart('0');
+                        if (i.Num?.IndexOf(k2, StringComparison.OrdinalIgnoreCase) >= 0)
+                            continue;
+                        return true; //移除
+                    }
+                    return false; //保留
+                });
+            }
 
             SortIndex(key, ls);
             return ls;
@@ -81,16 +108,20 @@ namespace Emby.Plugins.JavScraper.Scrapers
                 if (img != null)
                 {
                     m.Cover = img.GetAttributeValue("data-original", null);
-                    if (string.IsNullOrEmpty(m.Cover)) m.Cover = img.GetAttributeValue("data-src", null);
-                    if (string.IsNullOrEmpty(m.Cover)) m.Cover = img.GetAttributeValue("src", null);
+                    if (string.IsNullOrEmpty(m.Cover)) 
+                        m.Cover = img.GetAttributeValue("data-src", null);
+                    if (string.IsNullOrEmpty(m.Cover)) 
+                        m.Cover = img.GetAttributeValue("src", null);
                     if (m.Cover?.StartsWith("//") == true)
                         m.Cover = $"https:{m.Cover}";
                 }
 
                 m.Num = node.SelectSingleNode("./div[@class='uid']")?.InnerText.Trim();
-                if(string.IsNullOrEmpty(m.Num))  m.Num =node.SelectSingleNode("./div[@class='uid2']")?.InnerText.Trim();
+                if (string.IsNullOrEmpty(m.Num)) 
+                    m.Num = node.SelectSingleNode("./div[@class='uid2']")?.InnerText.Trim();
                 m.Title = node.SelectSingleNode("./div[@class='video-title']")?.InnerText.Trim();
-                if(string.IsNullOrEmpty(m.Title))  m.Title =node.SelectSingleNode("./div[@class='video-title2']")?.InnerText.Trim();
+                if (string.IsNullOrEmpty(m.Title)) 
+                    m.Title = node.SelectSingleNode("./div[@class='video-title2']")?.InnerText.Trim();
                 m.Date = node.SelectSingleNode("./div[@class='meta']")?.InnerText.Trim();
 
                 if (string.IsNullOrWhiteSpace(m.Num) == false && m.Title?.StartsWith(m.Num, StringComparison.OrdinalIgnoreCase) == true)
@@ -142,8 +173,10 @@ namespace Emby.Plugins.JavScraper.Scrapers
             {
                 var coverNode = doc.DocumentNode.SelectSingleNode("//img[@class='box video-cover']");
                 var img = coverNode?.GetAttributeValue("data-original", null);
-                if (string.IsNullOrEmpty(img)) img = coverNode?.GetAttributeValue("data-src", null);
-                if (string.IsNullOrEmpty(img)) img = coverNode?.GetAttributeValue("src", null);
+                if (string.IsNullOrEmpty(img))
+                    img = coverNode?.GetAttributeValue("data-src", null);
+                if (string.IsNullOrEmpty(img)) 
+                    img = coverNode?.GetAttributeValue("src", null);
 
                 if (string.IsNullOrWhiteSpace(img) == false)
                     return img;

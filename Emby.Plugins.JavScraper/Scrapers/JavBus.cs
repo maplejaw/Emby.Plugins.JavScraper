@@ -28,7 +28,7 @@ namespace Emby.Plugins.JavScraper.Scrapers
         /// </summary>
         /// <param name="handler"></param>
         public JavBus(ILogger log = null)
-            : base("https://www.fanbus.one/", log)
+            : base("https://www.javbus.com/", log)
         {
         }
 
