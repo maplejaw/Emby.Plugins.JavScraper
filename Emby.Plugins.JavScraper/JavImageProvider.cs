@@ -1,13 +1,11 @@
 ﻿using Emby.Plugins.JavScraper.Scrapers;
 using Emby.Plugins.JavScraper.Services;
 using MediaBrowser.Common.Configuration;
-using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
-using MediaBrowser.Model.IO;
 
 #if __JELLYFIN__
 using Microsoft.Extensions.Logging;
@@ -17,7 +15,6 @@ using MediaBrowser.Model.Logging;
 
 using MediaBrowser.Model.Serialization;
 using System;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,25 +24,29 @@ namespace Emby.Plugins.JavScraper
 {
     public class JavImageProvider : IDynamicImageProvider
     {
-        private readonly IHttpClient _httpClient;
         private readonly IProviderManager providerManager;
         private readonly ILibraryManager libraryManager;
+        private readonly ImageProxyService imageProxyService;
         private readonly ILogger _logger;
         private readonly IJsonSerializer _jsonSerializer;
         private readonly IApplicationPaths _appPaths;
-        public ImageProxyService ImageProxyService => Plugin.Instance.ImageProxyService;
 
-        public JavImageProvider(IHttpClient httpClient, IProviderManager providerManager, ILibraryManager libraryManager,
+        public JavImageProvider(IProviderManager providerManager, ILibraryManager libraryManager,
 #if __JELLYFIN__
-            ILoggerFactory logManager
+            ILoggerFactory logManager,
 #else
-            ILogManager logManager
+            ILogManager logManager,
+            ImageProxyService imageProxyService,
 #endif
-            , IJsonSerializer jsonSerializer, IFileSystem fileSystem, IApplicationPaths appPaths)
+            IJsonSerializer jsonSerializer, IApplicationPaths appPaths)
         {
-            _httpClient = httpClient;
             this.providerManager = providerManager;
             this.libraryManager = libraryManager;
+#if __JELLYFIN__
+            imageProxyService = Plugin.Instance.ImageProxyService;
+#else
+            this.imageProxyService = imageProxyService;
+#endif
             _logger = logManager.CreateLogger<JavImageProvider>();
             _appPaths = appPaths;
             _jsonSerializer = jsonSerializer;
@@ -97,7 +98,7 @@ namespace Emby.Plugins.JavScraper
 
             try
             {
-                var resp = await ImageProxyService.GetImageResponse(m.Cover, type, cancellationToken);
+                var resp = await imageProxyService.GetImageResponse(m.Cover, type, cancellationToken);
                 if (resp?.ContentLength > 0)
                 {
 #if __JELLYFIN__

@@ -31,8 +31,14 @@ namespace Emby.Plugins.JavScraper.Scrapers
         /// 构造
         /// </summary>
         /// <param name="handler"></param>
-        public JavDB(ILogger log = null)
-            : base("https://javdb.com/", log)
+        public JavDB(
+#if __JELLYFIN__
+            ILoggerFactory logManager
+#else
+            ILogManager logManager
+#endif
+            )
+            : base("https://javdb.com/", logManager.CreateLogger<JavDB>())
         {
         }
 
@@ -171,7 +177,7 @@ namespace Emby.Plugins.JavScraper.Scrapers
 
             string GetCover()
             {
-                var coverNode = doc.DocumentNode.SelectSingleNode("//img[@class='box video-cover']");
+                var coverNode = doc.DocumentNode.SelectSingleNode("//img[contains(@class,'video-cover')]");
                 var img = coverNode?.GetAttributeValue("data-original", null);
                 if (string.IsNullOrEmpty(img))
                     img = coverNode?.GetAttributeValue("data-src", null);
@@ -183,7 +189,7 @@ namespace Emby.Plugins.JavScraper.Scrapers
                 img = doc.DocumentNode.SelectSingleNode("//meta[@property='og:image']")?.GetAttributeValue("content", null);
                 if (string.IsNullOrWhiteSpace(img) == false)
                     return img;
-                img = doc.DocumentNode.SelectSingleNode("//meta[@class='fancybox-video']")?.GetAttributeValue("poster", null);
+                img = doc.DocumentNode.SelectSingleNode("//meta[@class='column column-video-cover']")?.GetAttributeValue("poster", null);
 
                 return img;
             }
